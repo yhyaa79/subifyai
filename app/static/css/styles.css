@@ -416,39 +416,6 @@
 
 
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 1.5rem;
-            }
-
-            .hero {
-                font-size: 0.9rem;
-            }
-
-            .information-box {
-                font-size: 0.9rem;
-            }
-
-            section h2 {
-                font-size: 1.2rem;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .container {
-                max-width: 768px;
-                margin: 0 auto;
-            }
-
-            .bottom-sheet {
-                max-width: 768px;
-                margin: 0 auto;
-                right: 50%;
-                transform: translateX(50%);
-            }
-        }
-
         /* Dark Mode Support */
         /*@media (prefers-color-scheme: dark) {
             :root {
