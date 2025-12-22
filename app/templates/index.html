@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Subtitle Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font/dist/font-face.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.10.2/dist/ffmpeg.min.js"></script>
+
+    
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav>
+                <div class="logo">AI Subtitle Generator</div>
+                <i class="fa-solid fa-closed-captioning" style="font-size: 2rem; margin-left: 20px;"></i>
+            </nav>
+            <div class="hero">
+                <h1>تولید زیرنویس خودکار با هوش مصنوعی</h1>
+                <br>
+                <div class="tab-container">
+                    <div class="tabs">
+                    <button class="tab active" onclick="showContent(0)"><i class="fas fa-info-circle about-icon"></i></button>
+                      <button class="tab" onclick="showContent(1)"><i class="fas fa-cloud-upload-alt"></i></button>
+                      <button class="tab" onclick="showContent(2)"><i class="fas fa-language"></i></button>
+                      <button class="tab" onclick="showContent(3)"><i class="fas fa-cog"></i></button>
+                      <button class="tab" onclick="showContent(4)"><i class="fas fa-download"></i></button>
+                    </div>
+                    <div class="content-container">
+                        <div class="content active">این سایت به شما این امکان را میدهد تا به راحتی ویدیو های خود را آپلود کنید و به‌ صورت خودکار زیرنویس‌ هایی دقیق و هماهنگ با محتوای ویدیو دریافت کنید. با استفاده از هوش مصنوعی پیشرفته، این ابزار به سرعت محتوای ویدیوی شما را تحلیل کرده و زیرنویس ‌هایی متناسب با گفتار ایجاد می‌کند.
+                            همچنین، قابلیت ترجمه زیرنویس‌ ها به زبان ‌های مختلف و تنظیم دقیق پارامترهای نمایش زیرنویس مانند سرعت و تاخیر وجود دارد. این سایت مناسب برای تولیدکنندگان محتوا، مترجمان، و افرادی است که نیاز به زیرنویس‌ های حرفه ‌ای دارند. شما میتوانید از خروجی این سایت فایل srt دریافت کنید. 
+                           این سایت از مدل OpenAI برای ساخت زیرنویس استفاده میکند که از زبان های 	فارسی، 	انگلیسی، عربی، 	اسپانیایی، 	فرانسوی، 	روسی، 	چینی، 	ژاپنی، 	ترکی و 75 زبان دیگر پشتیبانی میکند. 
+                           شما میتوانید با  انتخاب مدل های large یا medium دقت تولید زیرنویس را بالا ببرید و همچنین برای ویدیو هایی که صوت با کیفیت پایین یا نویز شدید دارن میتوانید از این دو مدل استفاده کنید
+                            <br>
+                            <br>
+                            <br>
+                            <br>
+                            <br>
+                            <p>گزارش خطا ـ تماس با ما</p>
+                            <div class="contact-info">
+                                <a href="https://t.me/yah_ya_suo" target="_blank">تماس از طریق تلگرام</a>
+                                <span>|</span>
+                                <a href="mailto:yahyaeslami79.com">  ایمیل</a>
+                            </div>
+                            <br>
+                            <br>
+                            <p>© 2024 تولید زیرنویس خودکار با هوش مصنوعی | تمامی حقوق محفوظ است.</p>
+                            <br>
+                        </div>
+                      <div class="content">در بخش آپلود ویدیو شما باید فایل صوتی یا ویدیویی مورد نظر خود را آپلود کنید. با گزینه "انتخاب فایل" فایل رویدیو مورد نظر را از سیستم خود انتخاب کنید. پس از آپلود، فایل آماده پردازش خواهد بود.</div>
+                      <div class="content">اگر نیاز به ترجمه زیرنویس به زبان دیگری دارید، گزینه "فعال‌ سازی ترجمه" را فعال کنید. با فعال‌ سازی ترجمه، می‌ توانید زبان مورد نظر خود را از منوی کشویی انتخاب کنید و زیرنویس‌ به صورت خودکار ترجمه خواهد شد.</div>
+                      <div class="content">در این بخش می‌توانید تنظیمات مربوط به نمایش زیرنویس‌ را انجام دهید. شامل تغییرات در سرعت نمایش، تاخیر زمانی و فاصله زمانی بین شروع و پایان زیرنویس‌ ها است تا بتوانید زیرنویس‌ را دقیق‌ تر هماهنگ کنید. با استفاده از "فاصله انتهایی" و "فاصله ابتدایی" میتوانید زمان نمایش هر متن زیرنویس را مشخص کنید. </div>
+                      <div class="content">پس از انجام تنظیمات مورد نظر، مدل را انتخاب کنید (به طور پیشفرض برای زبان انگلیسی با کیفیت مناسب صدای ویدیو مدل "tiny" مناسب خواهد بود ولی برای زبان های دیگر و کیفیت پایین صدای ویدیو از مدل های "small" و "medium" استفاده کنید و در نظر داشته باشید با انتخاب مدل های پیشرفته تر زمان ساخت زیرنویس بیشتر خواهد شد) و پس از آن گزینه "شروع" را انتخاب کنید تا فرآیند تولید زیرنویس آغاز شود. زیرنویس آماده شده به صورت فایل قابل دانلود در اختیار شما قرار می‌گیرد.</div>
+                  </div>
+            </div>
+            <div class="container">
+                <p class="container_p">شروع</p>
+                <img src="{{ url_for('static', filename='images/up-arrow.png') }}" alt="نمونه تصویر">
+            </div>
+        </header>
+
+        <div class="bottom-sheet">
+            <div class="drag-handle"></div>
+            <div class="sheet-content">
+                <form action="/" method="post" enctype="multipart/form-data">
+                    <section id="upload" class="upload-section">
+                        <h2><i class="fas fa-upload"></i> آپلود ویدیو</h2>
+                        <div class="upload-box">
+                            <label for="fileUpload" class="custom-file-upload">
+                                انتخاب فایل
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </label>
+                            <input type="file" name="file" id="fileUpload">
+                        </div>
+                    </section>
+
+                    <section id="translation" class="translation-section">
+                        <h2><i class="fas fa-language"></i> ترجمه زیرنویس</h2>
+                        <label>
+                            <input type="checkbox" id="enableTranslation" name="enableTranslation">
+                            فعال‌ سازی ترجمه
+                        </label>
+                        <select id="dest_lang" name="dest_lang" disabled>
+                            <option value="ar">Arabic</option>
+                            <option value="en">English</option>
+                            <option value="fa">Persian</option>
+                            <option value="fr">French</option>
+                            <option value="tr">Turkish</option>
+                        </select>
+                    </section>
+
+                    <section id="settings" class="settings-section">
+                        <h2><i class="fas fa-cog"></i> تنظیمات زیرنویس</h2>
+                        <fieldset class="settings-fieldset">
+                            <legend>تأخیر</legend>
+                            <input type="number" name="subtitleDelay" min="-100" max="100" value="0.0" step="0.1">
+                        </fieldset>
+
+                        <fieldset class="settings-fieldset">
+                            <legend>سرعت</legend>
+                            <input type="number" name="subtitleSpeed" min="0" max="10" value="1.0" step="0.1">
+                        </fieldset>
+
+                        <fieldset class="settings-fieldset">
+                            <legend>فاصله انتهایی</legend>
+                            <input type="number" name="PaddingStart" min="-10" max="10" value="0.0" step="0.1">
+                        </fieldset>
+                        
+                        <fieldset class="settings-fieldset">
+                            <legend>فاصله ابتدایی</legend>
+                            <input type="number" name="PaddingEnd" min="-10" max="10" value="1.0" step="0.1">
+                        </fieldset>
+                    </section>
+
+                    <section id="download" class="download-section">
+                        <h2><i class="fas fa-download"></i> دریافت زیرنویس</h2>
+                        <label class="model">انتخاب مدل:</label>
+                        <select id="model" name="model">
+                            <option value="tiny">tiny</option>
+                            <option value="base">base</option>
+                            <option value="small">small</option>
+                            <option value="medium">medium</option>
+                            <option value="large">large</option>
+                        </select>
+                        <button type="submit" id="generateBtn"><i class="fas fa-play"></i>شروع</button>
+                        <div id="errorModal" class="modal">
+                            <div class="modal-content">
+                                <span class="close-btn">&times;</span>
+                                <label id="errorMessage">یک خطا رخ داده است!</label>
+                            </div>
+                        </div>
+                    </section>
+                </form>
+            </div>
+        </div>
+    </div>
+        <!-- لینک‌دهی به JavaScript -->
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    
+</body>
+</html>
