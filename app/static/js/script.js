@@ -58,12 +58,79 @@ bottomSheet.removeEventListener('touchend', () => {});
 
 
 
-document.getElementById("enableTranslation").addEventListener("change", function() {
-document.getElementById("dest_lang").disabled = !this.checked;
+document.getElementById("enableTranslation").addEventListener("change", function () {
+    document.getElementById("dest_lang").disabled = !this.checked;
 });
 
-document.getElementById("generateBtn").addEventListener("click", function(event) {
-event.preventDefault(); // جلوگیری از ارسال فرم به صورت پیش‌فرض
+// نمایش نام فایل بعد از انتخاب
+const fileInput = document.getElementById("fileUpload");
+const uploadBox = document.querySelector(".upload-box");
+
+// ایجاد المان برای نمایش نام فایل
+const fileNameDisplay = document.createElement("p");
+fileNameDisplay.classList.add("file-name");
+fileNameDisplay.textContent = "فایلی انتخاب نشده";
+fileNameDisplay.style.marginTop = "10px";
+fileNameDisplay.style.fontSize = "14px";
+fileNameDisplay.style.color = "#666";
+uploadBox.appendChild(fileNameDisplay);
+
+fileInput.addEventListener("change", function () {
+    if (this.files && this.files.length > 0) {
+        fileNameDisplay.textContent = this.files[0].name;
+        fileNameDisplay.style.color = "#2c8a2c";
+    } else {
+        fileNameDisplay.textContent = "فایلی انتخاب نشده";
+        fileNameDisplay.style.color = "#666";
+    }
+});
+
+// مدیریت کلیک دکمه شروع
+document.getElementById("generateBtn").addEventListener("click", function (event) {
+    event.preventDefault();
+
+    // اگر قبلاً پیام وضعیت یا دکمه دانلود وجود داشته باشد، پاک کن
+    const existingStatus = document.querySelector(".status");
+    if (existingStatus) existingStatus.remove();
+
+    const existingDownloadButton = document.querySelector(".download-button");
+    if (existingDownloadButton) existingDownloadButton.remove();
+
+    // تغییر دکمه به حالت «در حال پردازش»
+    const generateBtn = document.getElementById("generateBtn");
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> لطفا صبر کنید...';
+
+    const formData = new FormData(document.querySelector("form"));
+
+    fetch("/", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // ایجاد دکمه دانلود
+                const downloadButton = document.createElement("a");
+                downloadButton.href = data.download_url;
+                downloadButton.textContent = "دانلود زیرنویس";
+                downloadButton.classList.add("download-button");
+                downloadButton.setAttribute("download", "adjusted_subtitle.srt");
+                document.querySelector(".download-section").appendChild(downloadButton);
+            } else {
+                showErrorModal("خطایی رخ داده است. لطفاً مطمئن شوید که ویدیو به درستی آپلود شده است.");
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            showErrorModal("خطایی در ارتباط با سرور رخ داده است.");
+        })
+        .finally(() => {
+            // در هر حالت (موفق یا خطا) دکمه را به حالت اولیه برگردان
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-play"></i> شروع';
+        });
+});
 
 // حذف دکمه دانلود قدیمی در صورت وجود
 const existingDownloadButton = document.querySelector(".download-button");
@@ -82,48 +149,45 @@ const formData = new FormData(document.querySelector("form"));
 
 // ارسال درخواست AJAX
 fetch("/", {
-    method: "POST",
-    body: formData
-})
-.then(response => response.json())
-.then(data => {
-    // حذف پیام لطفا صبر کنید
-    statusMessage.remove();
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // حذف پیام لطفا صبر کنید
+        statusMessage.remove();
 
-    if (data.success) {
-        // اضافه کردن دکمه دانلود
-        const downloadButton = document.createElement("a");
-        downloadButton.href = data.download_url;
-        downloadButton.textContent = "دانلود زیرنویس";
-        downloadButton.classList.add("download-button");
-        downloadButton.setAttribute("download", "adjusted_subtitle.srt");
+        if (data.success) {
+            // اضافه کردن دکمه دانلود
+            const downloadButton = document.createElement("a");
+            downloadButton.href = data.download_url;
+            downloadButton.textContent = "دانلود زیرنویس";
+            downloadButton.classList.add("download-button");
+            downloadButton.setAttribute("download", "adjusted_subtitle.srt");
 
-        // اضافه کردن دکمه به بخش دانلود
-        document.querySelector(".download-section").appendChild(downloadButton);
-    } else {
-        showErrorModal("خطایی رخ داده. لطفا چک کنید ویدیو به درستی اپلود شده باشه!");
-    }
-})
-.catch(error => {
-    statusMessage.remove();
-    showErrorModal("خطایی رخ داده. لطفا چک کنید ویدیو به درستی اپلود شده باشه!");
-    console.error("Error:", error);
-});
-});
+            // اضافه کردن دکمه به بخش دانلود
+            document.querySelector(".download-section").appendChild(downloadButton);
+        } 
+    })
+    .catch(error => {
+        statusMessage.remove();
+        console.error("Error:", error);
+    });
+
 
 
 function showContent(index) {
-// انتخاب تمام تب‌ها و محتواها
-const tabs = document.querySelectorAll(".tab");
-const contents = document.querySelectorAll(".content");
+    // انتخاب تمام تب‌ها و محتواها
+    const tabs = document.querySelectorAll(".tab");
+    const contents = document.querySelectorAll(".content");
 
-// حذف کلاس active از همه تب‌ها و محتواها
-tabs.forEach((tab) => tab.classList.remove("active"));
-contents.forEach((content) => content.classList.remove("active"));
+    // حذف کلاس active از همه تب‌ها و محتواها
+    tabs.forEach((tab) => tab.classList.remove("active"));
+    contents.forEach((content) => content.classList.remove("active"));
 
-// اضافه کردن کلاس active به تب و محتوای انتخاب شده
-tabs[index].classList.add("active");
-contents[index].classList.add("active");
+    // اضافه کردن کلاس active به تب و محتوای انتخاب شده
+    tabs[index].classList.add("active");
+    contents[index].classList.add("active");
 }
 
 
@@ -151,12 +215,3 @@ function showErrorModal(message) {
         }
     };
 }
-
-
-
-
-
-
-
-
-
