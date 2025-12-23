@@ -99,16 +99,20 @@ nav a:hover {
 
 
 
+.div-start {
+    display: inline-flex;
+    align-items: center;
+}
 
-.container {
+.start {
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
-    margin-right: 42.5%;
-    margin-top: 102px;
+    margin-top: 90px;
+    margin-left: 70px;
 }
 
-.container img {
+.start img {
     width: 50px;
     height: auto;
     margin-top: 15px;
@@ -117,7 +121,7 @@ nav a:hover {
 }
 
 
-.container p {
+.start p {
     font-size: 1.2rem;
     color: #cd674c;
     margin-left: 3px;
@@ -130,7 +134,6 @@ nav a:hover {
 
 .tab-container {
     width: 100%;
-    border: 1px solid #ccc;
     border-radius: var(--border-radius);
     overflow: hidden;
     margin-top: 20px;
@@ -152,11 +155,11 @@ nav a:hover {
 }
 
 .tab:hover {
-    background-color: #bbb;
+    background-color: #db482dab;
 }
 
 .tab.active {
-    background-color: #aebdc7;
+    background-color: #f1aca0;
     font-weight: bold;
 }
 
@@ -166,9 +169,6 @@ nav a:hover {
     height: 230px;
     /* ارتفاع ثابت برای ایجاد محدودیت */
     overflow-y: auto;
-    /* فعال کردن اسکرول عمودی */
-    border-top: 1px solid #aebec8;
-    /* جداکننده بین تب‌ها و محتوا */
 }
 
 .content {
