@@ -13,6 +13,36 @@ toggleIcon.style.cursor = 'pointer';
 toggleIcon.style.zIndex = '1001';
 
 
+
+
+// تولید یا دریافت شناسه منحصر به فرد کاربر از localStorage
+function getOrCreateUserId() {
+    let userId = localStorage.getItem('subify_user_id');
+    if (!userId) {
+        // تولید یک شناسه تصادفی ساده (کافی برای این منظور)
+        userId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        localStorage.setItem('subify_user_id', userId);
+    }
+    return userId;
+}
+
+// وقتی صفحه لود شد، فیلد مخفی user_id را پر کن
+window.addEventListener('DOMContentLoaded', () => {
+    const userId = getOrCreateUserId();
+    
+    // ایجاد یا به‌روزرسانی فیلد مخفی در فرم
+    let userIdInput = document.getElementById('user_id');
+    if (!userIdInput) {
+        userIdInput = document.createElement('input');
+        userIdInput.type = 'hidden';
+        userIdInput.name = 'user_id';
+        userIdInput.id = 'user_id';
+        document.querySelector('form').appendChild(userIdInput);
+    }
+    userIdInput.value = userId;
+});
+
+
 // Remove the existing drag handle
 dragHandle.remove();
 
@@ -89,14 +119,14 @@ fileInput.addEventListener("change", function () {
 document.getElementById("generateBtn").addEventListener("click", function (event) {
     event.preventDefault();
 
-    // اگر قبلاً پیام وضعیت یا دکمه دانلود وجود داشته باشد، پاک کن
+    // پاک کردن پیام‌های قبلی
     const existingStatus = document.querySelector(".status");
     if (existingStatus) existingStatus.remove();
 
     const existingDownloadButton = document.querySelector(".download-button");
     if (existingDownloadButton) existingDownloadButton.remove();
 
-    // تغییر دکمه به حالت «در حال پردازش»
+    // دکمه در حال پردازش
     const generateBtn = document.getElementById("generateBtn");
     generateBtn.disabled = true;
     generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> لطفا صبر کنید...';
@@ -104,32 +134,35 @@ document.getElementById("generateBtn").addEventListener("click", function (event
     const formData = new FormData(document.querySelector("form"));
 
     fetch("/", {
-            method: "POST",
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // ایجاد دکمه دانلود
-                const downloadButton = document.createElement("a");
-                downloadButton.href = data.download_url;
-                downloadButton.textContent = "دانلود زیرنویس";
-                downloadButton.classList.add("download-button");
-                downloadButton.setAttribute("download", "adjusted_subtitle.srt");
-                document.querySelector(".download-section").appendChild(downloadButton);
-            } else {
-                showErrorModal("خطایی رخ داده است. لطفاً مطمئن شوید که ویدیو به درستی آپلود شده است.");
-            }
-        })
-        .catch(error => {
-            console.error("Error:", error);
-            showErrorModal("خطایی در ارتباط با سرور رخ داده است.");
-        })
-        .finally(() => {
-            // در هر حالت (موفق یا خطا) دکمه را به حالت اولیه برگردان
-            generateBtn.disabled = false;
-            generateBtn.innerHTML = '<i class="fas fa-play"></i> شروع';
-        });
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // موفقیت: نمایش دکمه دانلود
+            const downloadButton = document.createElement("a");
+            downloadButton.href = data.download_url;
+            downloadButton.textContent = "دانلود زیرنویس";
+            downloadButton.classList.add("download-button");
+            downloadButton.setAttribute("download", "adjusted_subtitle.srt");
+            document.querySelector(".download-section").appendChild(downloadButton);
+        } else {
+            // خطا: حالا پیام دقیق سرور رو نمایش بده
+            let errorMessage = data.message || "خطایی ناشناخته رخ داد.";
+
+            // اگر پیام شامل HTML بود (مثل پیام rate limit)، مستقیم استفاده کن
+            showErrorModal(errorMessage);
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        showErrorModal("خطایی در ارتباط با سرور رخ داده است. لطفاً دوباره تلاش کنید.");
+    })
+    .finally(() => {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-play"></i> شروع';
+    });
 });
 
 // حذف دکمه دانلود قدیمی در صورت وجود
@@ -196,19 +229,16 @@ function showErrorModal(message) {
     const modal = document.getElementById("errorModal");
     const errorMessage = document.getElementById("errorMessage");
 
-    // تنظیم پیام خطا
-    errorMessage.textContent = message;
+    // استفاده از innerHTML به جای textContent برای نمایش HTML
+    errorMessage.innerHTML = message;
 
-    // نمایش مدال
     modal.style.display = "flex";
 
-    // افزودن رویداد برای بستن مدال
     const closeButton = modal.querySelector(".close-btn");
     closeButton.onclick = () => {
         modal.style.display = "none";
     };
 
-    // بستن مدال با کلیک بیرون از آن
     window.onclick = (event) => {
         if (event.target === modal) {
             modal.style.display = "none";

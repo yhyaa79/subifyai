@@ -5,8 +5,10 @@ import os
 from werkzeug.utils import secure_filename
 from app.utils import process_video_to_srt, delete_file
 
-import json
+import uuid
 from datetime import datetime, timedelta
+import json
+import os
 
 main = Blueprint('main', __name__)
 
@@ -35,19 +37,17 @@ def save_rate_limits(data):
     with open(RATE_LIMIT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-def is_rate_limited(ip):
-    """بررسی اینکه آیا کاربر در ۲۴ ساعت گذشته درخواست داده یا نه"""
+def is_rate_limited(identifier):
     limits = load_rate_limits()
-    if ip in limits:
-        last_time = datetime.fromisoformat(limits[ip])
+    if identifier in limits:
+        last_time = datetime.fromisoformat(limits[identifier])
         if datetime.now() < last_time + timedelta(seconds=RATE_LIMIT_SECONDS):
             return True, last_time + timedelta(seconds=RATE_LIMIT_SECONDS)
     return False, None
 
-def update_rate_limit(ip):
-    """به‌روزرسانی زمان آخرین درخواست کاربر"""
+def update_rate_limit(identifier):
     limits = load_rate_limits()
-    limits[ip] = datetime.now().isoformat()
+    limits[identifier] = datetime.now().isoformat()
     save_rate_limits(limits)
 
 def allowed_file(filename):
@@ -55,20 +55,42 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mkv', 'mov', 'wmv'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def get_or_create_rate_limit_file():
+    if not os.path.exists(RATE_LIMIT_FILE):
+        save_rate_limits({})
+
 @main.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        user_ip = request.remote_addr
+        # اولویت با user_id، اگر نبود از IP استفاده کن
+        user_identifier = request.form.get('user_id')
+        if not user_identifier:
+            user_identifier = request.remote_addr  # fallback به IP
 
-        # بررسی محدودیت
-        limited, until = is_rate_limited(user_ip)
+        # بررسی rate limit
+        limited, until = is_rate_limited(user_identifier)
         if limited:
-            remaining = int((until - datetime.now()).total_seconds())
-            hours = remaining // 3600
-            minutes = (remaining % 3600) // 60
+            remaining_seconds = int((until - datetime.now()).total_seconds())
+            hours = remaining_seconds // 3600
+            minutes = (remaining_seconds % 3600) // 60
+            seconds = remaining_seconds % 60
+
+            # پیام زیبا و کاربرپسند
+            if hours > 0:
+                time_str = f"{hours} ساعت و {minutes} دقیقه"
+            elif minutes > 0:
+                time_str = f"{minutes} دقیقه و {seconds} ثانیه"
+            else:
+                time_str = f"{seconds} ثانیه"
+
             return jsonify({
                 "success": False,
-                "message": f"شما قبلاً در ۲۴ ساعت گذشته درخواست داده‌اید. لطفاً {hours} ساعت و {minutes} دقیقه دیگر تلاش کنید."
+                "message": f"""
+                <strong>محدودیت استفاده روزانه</strong><br><br>
+                شما امروز قبلاً یک زیرنویس تولید کرده‌اید.<br>
+                هر کاربر فقط <strong>یک بار در روز</strong> می‌تواند زیرنویس بسازد.<br><br>
+                لطفاً <strong>{time_str}</strong> دیگر دوباره تلاش کنید.<br><br>
+                """
             })
 
         if 'file' not in request.files:
@@ -119,17 +141,17 @@ def index():
             delete_file(srt_output_path)
 
             if os.path.exists(output_path):
-                # فقط در صورت موفقیت، محدودیت را اعمال کن
-                update_rate_limit(user_ip)
+                # فقط در صورت موفقیت، محدودیت را ثبت کن
+                update_rate_limit(user_identifier)
 
                 download_url = url_for("main.download_file", filename="adjusted_subtitle.srt")
                 return jsonify({"success": True, "download_url": download_url})
             else:
-                return jsonify({"success": False, "message": "Subtitle generation failed"})
-                
+                return jsonify({"success": False, "message": "تولید زیرنویس با مشکل مواجه شد."})
+
         except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            return jsonify({"success": False, "message": str(e)})
+            print(f"Error: {str(e)}")
+            return jsonify({"success": False, "message": "خطایی در پردازش ویدیو رخ داد. لطفاً دوباره تلاش کنید."})
 
     return render_template('index.html')
 
